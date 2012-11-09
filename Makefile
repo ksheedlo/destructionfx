@@ -16,7 +16,7 @@ LFLAGS += `./env/bin/gdsl-config --libs`
 .PHONY: all
 all: smash
 
-octree.o: octree.c octree.h
+octree.o: octree.c octree.h 
 	$(CC) $(CFLAGS) -c $^
 
 smash: smash.c octree.o
@@ -24,4 +24,4 @@ smash: smash.c octree.o
 
 .PHONY: clean
 clean:
-	rm *.o *.h.gch smash
+	rm -rf *.o *.h.gch *.dSYM smash

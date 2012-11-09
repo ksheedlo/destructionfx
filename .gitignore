@@ -10,3 +10,9 @@
 *.lai
 *.la
 *.a
+
+# Cruft
+*.swp
+
+# Environment
+env/

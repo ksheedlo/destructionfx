@@ -8,7 +8,7 @@ destructionfx is a simulated voxel environment designed to facilitate creative
 destruction. It features realistic, efficient collision detection and
 destruction effects.
 
-# Project Setup
+## Project Setup
 
 The build environment uses the [GDSL](http://home.gna.org/gdsl/) data structures
 library and [Check](http://check.sourceforge.net/), a unit testing framework for

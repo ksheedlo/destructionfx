@@ -40,26 +40,46 @@ typedef struct {
     double x, y, z;
 } point3d;
 
+typedef struct {
+    double top, bottom, left, right, front, back;
+} bounding_box;
+
+typedef struct {
+    void *data;
+    void (*get_bounds)(bounding_box *, const void *);
+} octree_vol;
+
 typedef struct octree_node {
     int32_t size;
-    double x, y, z, width, height, depth;
-    point3d points[OCTREE_MAXSIZE];
-    int point_at[OCTREE_MAXSIZE];
+    const double x, y, z, width, height, depth;
+    octree_vol data[OCTREE_MAXSIZE];
+    int element_at[OCTREE_MAXSIZE];
     struct octree_node *child[8];
 } octree_n;
 
-void octree_init(octree_n *tree, double x, double y, double z,
-                 double width, double height, double depth);
+void octree_init(octree_n *tree, 
+                 const double x, 
+                 const double y, 
+                 const double z,
+                 const double width, 
+                 const double height, 
+                 const double depth
+                );
 
-int octree_insert(octree_n *tree, point3d *point);
+/* Inserts a volume into the tree.
+ *
+ * Volume data will be copied into the tree, rather than referenced. This means
+ * that it is fine to pass an address on the stack as the address of volume and
+ * it will be saved correctly into the tree.
+ */
+int octree_insert(octree_n *tree, const octree_vol *volume);
 
-void octree_delete(octree_n *tree, point3d *point, point3d *result);
+int octree_delete(octree_n *tree, const octree_vol *volume);
 
-int octree_collide(octree_n *tree, point3d *point);
+int octree_collide(const octree_n *tree, const octree_vol *volume);
 
-int octree_contains(octree_n *tree, point3d *point);
+void octree_traverse(const octree_n *tree, void (*func)(const octree_vol *));
 
-int octree_intersects_volume(octree_n *tree, double x, double y, double z,
-                              double width, double height, double depth);
+int bounds_intersect(const bounding_box *lhs, const bounding_box *rhs);
 
-
+int _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume);

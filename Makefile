@@ -13,6 +13,9 @@ endif
 CFLAGS += `./env/bin/gdsl-config --cflags`
 LFLAGS += `./env/bin/gdsl-config --libs`
 
+CHECKFLAGS=`pkg-config ./env/lib/pkgconfig/check.pc --cflags`
+CHECKLIBS=`pkg-config ./env/lib/pkgconfig/check.pc --libs`
+
 .PHONY: all
 all: smash
 

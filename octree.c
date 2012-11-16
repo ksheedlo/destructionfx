@@ -21,9 +21,6 @@ void octree_init(octree_n *tree, double x, double y, double z,
     tree->depth = depth;
     
     for (int32_t i = 0; i < OCTREE_MAXSIZE; i++) {
-        tree->points[i].x = 0.0;
-        tree->points[i].y = 0.0;
-        tree->points[i].z = 0.0;
         tree->point_at[i] = FALSE;
     }
     for (int32_t i = 0; i < 8; i++) {
@@ -31,10 +28,12 @@ void octree_init(octree_n *tree, double x, double y, double z,
     }
 }
 
-int octree_insert(octree_n *tree, point3d *point){
-    if (!octree_contains(tree, point)) {
+int octree_insert(octree_n *tree, octree_vol *volume){
+    if (!octree_collide(tree, volume)) {
         return 0;
     }
+    /* TODO: figure out how to insert a volume */
+#if 0
     if (tree->size < OCTREE_MAXSIZE) {
         /* Insert the point into the first available slot */
         for (int32_t i = 0; i < OCTREE_MAXSIZE; i++) {
@@ -105,28 +104,49 @@ int octree_insert(octree_n *tree, point3d *point){
         /* Add the new point to a child */
     }
 
+#endif
     /* This line should never be reached */
     return 0;
 }
 
-void octree_delete(octree_n *tree, point3d *point, point3d *result){
-    
-}
-
-int octree_collide(octree_n *tree, point3d *point){
+int octree_delete(octree_n *tree, const octree_vol *volume){
     
     return 0;
 }
 
-int octree_contains(octree_n *tree, point3d *point){
+int octree_collide(const octree_n *tree, const octree_vol *volume){
     
     return 0;
 }
 
-int octree_intersects_volume(octree_n *tree, double x, double y, double z,
-                              double width, double height, double depth){
-
-    return 0;
+void octree_traverse(const octree_n *tree, void (*func)(const octree_vol *)) {
+    /* Call func on tree's data elements */
+    for (int i = 0; i < OCTREE_MAXSIZE; i++) {
+        if (tree->element_at[i]) {
+            func(&(tree->data[i]));
+        }
+    }
+    /* Traverse subtrees */
+    for (int i = 0; i < 8; i++) {
+        if (tree->child[i] != NULL) {
+            octree_traverse(tree->child[i], func);
+        }
+    }
 }
 
+int bounds_intersect(const bounding_box *lhs, const bounding_box *rhs) {
+    if (lhs->top < rhs->bottom || lhs->bottom > rhs->top) {
+        return 0;
+    }
+    if (lhs->right < rhs->left || lhs->left > rhs->right) {
+        return 0;
+    }
+    if (lhs->front < rhs->back || lhs->back > rhs->front) {
+        return 0;
+    }
+    return 1;
+}
 
+int _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume) {
+    volume->get_bounds(box, volume->data);
+}

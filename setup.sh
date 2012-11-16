@@ -29,20 +29,20 @@ cd "$WDIR"
 rm gdsl-1.6.tar.gz
 rm -r gdsl-1.6
 
-# Check, a C unit testing framework
-wget http://downloads.sourceforge.net/project/check/check/0.9.8/check-0.9.8.tar.gz
-tar xzvf check-0.9.8.tar.gz
-cd check-0.9.8
+# CUnit
+wget http://downloads.sourceforge.net/project/cunit/CUnit/2.1-2/CUnit-2.1-2-src.tar.bz2
+tar xjvf CUnit-2.1-2-src.tar.bz2
+cd CUnit-2.1-2
 ./configure --prefix=$WDIR/env
 check_fail "./configure --prefix=$WDIR/env"
-make 
+make
 check_fail "make"
-make install 
+make install
 check_fail "make install"
 
 cd "$WDIR"
-rm check-0.9.8.tar.gz
-rm -r check-0.9.8
+rm -r CUnit-2.1-2
+rm CUnit-2.1-2-src.tar.bz2
 
 echo
 echo "########################################################################"

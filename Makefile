@@ -10,11 +10,11 @@ else
     LFLAGS += -lglut -lGLU
 endif
 
-CFLAGS += `./env/bin/gdsl-config --cflags`
-LFLAGS += `./env/bin/gdsl-config --libs`
+GDSLFLAGS=`./env/bin/gdsl-config --cflags`
+GDSLLIBS=`./env/bin/gdsl-config --libs`
 
-CHECKFLAGS=`pkg-config ./env/lib/pkgconfig/check.pc --cflags`
-CHECKLIBS=`pkg-config ./env/lib/pkgconfig/check.pc --libs`
+CUNITFLAGS=`pkg-config ./env/lib/pkgconfig/cunit.pc --cflags`
+CUNITLIBS=`pkg-config ./env/lib/pkgconfig/cunit.pc --libs`
 
 .PHONY: all
 all: smash

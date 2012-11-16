@@ -11,7 +11,7 @@ destruction effects.
 ## Project Setup
 
 The build environment uses the [GDSL](http://home.gna.org/gdsl/) data structures
-library and [Check](http://check.sourceforge.net/), a unit testing framework for
+library and [CUnit](http://cunit.sourceforge.net/), a unit testing framework for
 C. A setup script is included to install dependencies into the local
 environment. To run the initial setup:
 

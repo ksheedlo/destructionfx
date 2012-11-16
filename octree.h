@@ -82,4 +82,19 @@ void octree_traverse(const octree_n *tree, void (*func)(const octree_vol *));
 
 int bounds_intersect(const bounding_box *lhs, const bounding_box *rhs);
 
+/* Queries the octree for results intersecting the given volume.
+ *
+ * Parameters:
+ *      list    A GDSL list to use for storing results. Results are returned as
+ *              octree_vol types.
+ *      tree    The tree to query.
+ *      box     The bounds to query over.
+ *
+ * Returns: the number of matching entries.
+ */
+int octree_query_range(gdsl_list_t results, 
+                       const octree_n *tree, 
+                       const bounding_box *box
+                       );
+
 int _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume);

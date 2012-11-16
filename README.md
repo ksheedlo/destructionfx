@@ -1,7 +1,7 @@
 # destructionfx
 
-Destructible 3-D environments - CSCI 4229 Final Project
-Ken Sheedlo
+Destructible 3-D environments - CSCI 4229 Final Project  
+Ken Sheedlo  
 Fall 2012
 
 destructionfx is a simulated voxel environment designed to facilitate creative

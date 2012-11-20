@@ -14,7 +14,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-#include<gdsl.h>
+#include<gdsl_list.h>
 
 #define TRUE    1
 #define FALSE   0
@@ -59,7 +59,7 @@ typedef struct {
  */
 
 typedef struct {
-    double top, bottom, left, right, front, back;
+    double max_y, min_y, min_x, max_x, max_z, min_z;
 } bounding_box;
 
 typedef struct {
@@ -69,19 +69,19 @@ typedef struct {
 
 typedef struct octree_node {
     int32_t size;
-    const double x, y, z, width, height, depth;
+    double x, y, z, width, height, depth;
     gdsl_list_t volumes;
     struct octree_node *child[8];
 } octree_n;
 
 void octree_init(octree_n *tree, 
-                 const double x, 
-                 const double y, 
-                 const double z,
-                 const double width, 
-                 const double height, 
-                 const double depth,
-                 char *name
+                 double x, 
+                 double y, 
+                 double z,
+                 double width, 
+                 double height, 
+                 double depth,
+                 const char *name
                 );
 
 int _octree_initialize_children(octree_n *tree);
@@ -100,7 +100,7 @@ int octree_insert(octree_n *tree, const octree_vol *volume, int32_t flags);
 
 int _octree_safe_insert(octree_n *tree, const octree_vol *volume);
 
-int octree_delete(octree_vol *result, octree_n *tree, const octree_vol *volume);
+int octree_delete(octree_vol *result, octree_n *tree, const point3d *point);
 
 int octree_collide(const octree_n *tree, const octree_vol *volume);
 
@@ -127,6 +127,8 @@ int bounds_intersect(const bounding_box *lhs, const bounding_box *rhs);
  * Returns: a boolean
  */
 int bounds_contain(const bounding_box *lhs, const bounding_box *rhs);
+
+int bounds_contain_point(const bounding_box *box, const point3d *point);
 
 /* Queries the octree for results intersecting the given volume.
  *

@@ -10,20 +10,20 @@ else
     LFLAGS += -lglut -lGLU
 endif
 
-GDSLFLAGS=`./env/bin/gdsl-config --cflags`
-GDSLLIBS=`./env/bin/gdsl-config --libs`
+GDSLFLAGS=$(shell ./env/bin/gdsl-config --cflags)
+GDSLLIBS=$(shell ./env/bin/gdsl-config --libs)
 
-CUNITFLAGS=`pkg-config ./env/lib/pkgconfig/cunit.pc --cflags`
-CUNITLIBS=`pkg-config ./env/lib/pkgconfig/cunit.pc --libs`
+CUNITFLAGS=$(shell pkg-config ./env/lib/pkgconfig/cunit.pc --cflags)
+CUNITLIBS=$(shell pkg-config ./env/lib/pkgconfig/cunit.pc --libs)
 
 .PHONY: all
 all: smash
 
 octree.o: octree.c octree.h 
-	$(CC) $(CFLAGS) -c $^
+	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
 smash: smash.c octree.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS) $(GDSLLIBS)
 
 .PHONY: clean
 clean:

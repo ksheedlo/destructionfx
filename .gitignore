@@ -11,8 +11,15 @@
 *.la
 *.a
 
+# Compiled Binaries
+smash
+
+# OSX debug symbols
+*.dSYM
+
 # Cruft
 *.swp
+*.h.gch
 
 # Environment
 env/

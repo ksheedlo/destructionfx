@@ -19,11 +19,16 @@ CUNITLIBS=$(shell pkg-config ./env/lib/pkgconfig/cunit.pc --libs)
 .PHONY: all
 all: smash test 
 
+kmcam.o: kmcam.c kmcam.h
+
+util.o: util.c util.h
+	$(CC) $(CFLAGS) -c $^ $(GLLIBS)
+
 octree.o: octree.c octree.h 
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
-smash: smash.c octree.o
-	$(CC) $(CFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
+smash: smash.c octree.o kmcam.o util.o
+	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
 
 test: test.c test.h octree.o
 	$(CC) $(CFLAGS) $(CUNITFLAGS) $(GDSLFLAGS) -o $@ $^ -static $(GDSLLIBS) $(CUNITLIBS)

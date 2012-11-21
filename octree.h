@@ -21,15 +21,15 @@
 #define ERROR   2
 
 /* Magic numbers */
-#define OCTREE_EMPTY                0
 #define OCTREE_MAX_PREFERRED_SIZE   4
 #define _MAX_NAME_LENGTH            64
 
 /* Flags */
 #define OCTREE_ALLOW_COLLISIONS     1
+#define OCTREE_FREE_DATA            2
 
 /* Flag defaults */
-#define OCTREE_INSERT_DEFAULTS      0
+#define OCTREE_DEFAULTS      0
 
 
 /* Symbolic constants for octree quadrants.
@@ -90,6 +90,8 @@ gdsl_element_t _octree_elt_alloc(void *data);
 
 void _octree_elt_free(gdsl_element_t elt);
 
+void octree_destroy(octree_n *tree, int32_t flags);
+
 /* Inserts a volume into the tree.
  *
  * Volume data will be copied into the tree, rather than referenced. This means
@@ -107,6 +109,10 @@ int octree_collide(const octree_n *tree, const octree_vol *volume);
 int octree_contains(const octree_n *tree, const octree_vol *volume);
 
 void octree_traverse(const octree_n *tree, void (*func)(const octree_vol *));
+
+void _octree_traverse_and_free(const octree_n *tree);
+
+void _octree_volume_free_data(const octree_vol *volume);
 
 /* Checks to determine whether lhs and rhs intersect.
  *

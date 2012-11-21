@@ -100,8 +100,25 @@ void _octree_elt_free(gdsl_element_t elt) {
     free(elt);
 }
 
+void octree_destroy(octree_n *tree, int32_t flags) {
+    if (flags & OCTREE_FREE_DATA) {
+        /* Free data members, then clear the flag */
+        _octree_traverse_and_free(tree);
+        flags ^= OCTREE_FREE_DATA;
+    }
+    gdsl_list_free(tree->volumes);
+    tree->size = 0;
+    for (int i = 0; i < 8; i++) {
+        if (tree->child[i] != NULL) {
+            octree_destroy(tree->child[i], flags);
+            free(tree->child[i]);
+            tree->child[i] = NULL;
+        }
+    }
+}
+
 int octree_insert(octree_n *tree, const octree_vol *volume, int32_t flags){
-    if (!(flags | OCTREE_ALLOW_COLLISIONS)) {
+    if (!(flags & OCTREE_ALLOW_COLLISIONS)) {
         /* Don't allow collisions. */
         if (octree_collide(tree, volume)) {
             return FALSE;
@@ -237,7 +254,7 @@ int octree_collide(const octree_n *tree, const octree_vol *volume){
     /* Recurse on child subtrees. */
     for (int i = 0; i < 8; i++) {
         if (tree->child[i] != NULL) {
-            if (octree_collide(tree, volume)) {
+            if (octree_collide(tree->child[i], volume)) {
                 return TRUE;
             }
         }
@@ -255,13 +272,6 @@ int octree_contains(const octree_n *tree, const octree_vol *volume) {
 
 void octree_traverse(const octree_n *tree, void (*func)(const octree_vol *)) {
     /* Call func on tree's data elements */
-#if 0
-    for (int i = 0; i < OCTREE_MAXSIZE; i++) {
-        if (tree->element_at[i]) {
-            func(&(tree->data[i]));
-        }
-    }
-#endif
     gdsl_list_t volumes = tree->volumes;
     size_t volumes_len = gdsl_list_get_size(volumes);
     gdsl_list_cursor_t cursor = gdsl_list_cursor_alloc(volumes);
@@ -309,6 +319,14 @@ int octree_query_range(gdsl_list_t results,
         count += octree_query_range(results, tree->child[i], box);
     }
     return count;
+}
+
+void _octree_traverse_and_free(const octree_n *tree) {
+    octree_traverse(tree, _octree_volume_free_data);
+}
+
+void _octree_volume_free_data(const octree_vol *volume) {
+    free(volume->data);
 }
 
 int bounds_intersect(const bounding_box *lhs, const bounding_box *rhs) {

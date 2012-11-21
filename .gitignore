@@ -13,6 +13,7 @@
 
 # Compiled Binaries
 smash
+test
 
 # OSX debug symbols
 *.dSYM

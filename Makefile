@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Wno-unused-parameter -std=gnu99 -g
+CFLAGS=-Wall -Wextra -Wno-unused-parameter -Werror -std=gnu99 -g
 GLLIBS=
 
 SYSNAME=$(shell uname -s)
@@ -22,16 +22,19 @@ all: smash test
 kmcam.o: kmcam.c kmcam.h
 
 util.o: util.c util.h
-	$(CC) $(CFLAGS) -c $^ $(GLLIBS)
+	$(CC) $(CFLAGS) -c $^ 
 
 octree.o: octree.c octree.h 
+	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
+
+dfxcube.o: dfxcube.c dfxcube.h 
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
 smash: smash.c octree.o kmcam.o util.o
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
 
 test: test.c test.h octree.o
-	$(CC) $(CFLAGS) $(CUNITFLAGS) $(GDSLFLAGS) -o $@ $^ -static $(GDSLLIBS) $(CUNITLIBS)
+	$(CC) $(CFLAGS) $(CUNITFLAGS) $(GDSLFLAGS) -o $@ $^ $(GDSLLIBS) $(CUNITLIBS)
 
 .PHONY: clean
 clean:

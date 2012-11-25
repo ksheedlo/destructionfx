@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ ! -f ./smash_raw ]]
+then
+    make
+fi
+LD_LIBRARY_PATH=env/lib:$LD_LIBRARY_PATH ./smash_raw
+

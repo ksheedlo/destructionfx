@@ -12,7 +12,7 @@
 *.a
 
 # Compiled Binaries
-smash
+smash_raw
 test
 
 # OSX debug symbols

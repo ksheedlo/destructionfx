@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Wno-unused-parameter -Werror -std=gnu99 -g
+CFLAGS=-Wall -Wextra -Wno-unused-parameter -std=gnu99 -g
 GLLIBS=
 
 SYSNAME=$(shell uname -s)
@@ -17,7 +17,7 @@ CUNITFLAGS=$(shell pkg-config ./env/lib/pkgconfig/cunit.pc --cflags)
 CUNITLIBS=$(shell pkg-config ./env/lib/pkgconfig/cunit.pc --libs)
 
 .PHONY: all
-all: smash test 
+all: smash_raw test 
 
 kmcam.o: kmcam.c kmcam.h
 
@@ -30,7 +30,7 @@ octree.o: octree.c octree.h
 dfxcube.o: dfxcube.c dfxcube.h 
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
-smash: smash.c octree.o kmcam.o util.o
+smash_raw: smash.c octree.o kmcam.o util.o
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
 
 test: test.c test.h octree.o
@@ -38,4 +38,4 @@ test: test.c test.h octree.o
 
 .PHONY: clean
 clean:
-	rm -rf *.o *.h.gch *.dSYM smash test 
+	rm -rf *.o *.h.gch *.dSYM smash_raw test 

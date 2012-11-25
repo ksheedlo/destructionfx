@@ -8,6 +8,20 @@
  *
  ******************************************************************************/
 
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+
+#if defined(__APPLE__) || defined(MACOSX)
+    #include<GLUT/glut.h>
+    #include<OpenGL/gl.h>
+    #include <OpenGL/glu.h>
+#else
+    #include <GL/glut.h>
+    #include <GL/gl.h>
+    #include <GL/glu.h>
+#endif
+
 #include "kmcam.h"
 #include "octree.h"
 #include "util.h"

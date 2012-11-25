@@ -361,7 +361,7 @@ void init(void) {
 
     GLdouble camera_pos[3] = {
         0.0,
-        0.7,
+        1.11,
         -6.0
     };
     kmcam_translate(&camera, camera_pos);
@@ -411,6 +411,8 @@ void init(void) {
             }
         }
     }
+
+    glClearColor(0.239, 0.776, 0.890, 1.0);
 }
 
 int main(int argc, char **argv) {

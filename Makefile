@@ -30,7 +30,7 @@ octree.o: octree.c octree.h
 dfxcube.o: dfxcube.c dfxcube.h 
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
-smash_raw: smash.c octree.o kmcam.o util.o
+smash_raw: smash.c octree.o kmcam.o util.o dfxcube.o CSCIx229.a
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
 
 test: test.c test.h octree.o

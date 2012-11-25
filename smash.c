@@ -22,12 +22,22 @@
     #include <GL/glu.h>
 #endif
 
+#include "CSCIx229.h"
+
 #include "kmcam.h"
 #include "octree.h"
+#include "dfxcube.h"
 #include "util.h"
 
 static km_camera camera;
 static double aspect_ratio;
+static dfx_cube cube;
+
+static int ambient = 30;
+static int diffuse = 100;
+static int specular = 0;
+
+static unsigned int texture[4];
 
 void display(void) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -43,7 +53,75 @@ void display(void) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix(); /* MODELVIEW */
         kmcam_place(&camera);
+        
+        /* Initialize lighting */
+        float ambient_vec[] = {
+            0.01 * ambient,
+            0.01 * ambient,
+            0.01 * ambient,
+            1.0
+        };
+        float diffuse_vec[] = {
+            0.01 * diffuse,
+            0.01 * diffuse,
+            0.01 * diffuse,
+            1.0
+        };
+        float specular_vec[] = {
+            0.01 * specular,
+            0.01 * specular,
+            0.01 * specular,
+            1.0
+        };
+        float position_vec[] = { -20.0, 0.0, 0.0, 1.0 };
+        glEnable(GL_NORMALIZE);
+        glEnable(GL_LIGHTING);
+        //TODO: Set local viewer? Or figure out what it does
+        // glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
+        glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+        glEnable(GL_COLOR_MATERIAL);
+        glEnable(GL_LIGHT0);
+        // Configure light 0
+        glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_vec);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_vec);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, specular_vec);
+        // Rotate the sun in the ecliptic plane (Boulder is 40 deg N)
+        // sin(40) = 0.643, cos(40) = 0.766
+        glPushMatrix();
+            glRotatef(-90.0, 0.0, 0.643, 0.766);
+            glLightfv(GL_LIGHT0, GL_POSITION, position_vec);
+        glPopMatrix();
 
+        /* Draw the ground */
+        glEnable(GL_TEXTURE_2D);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glBindTexture(GL_TEXTURE_2D,texture[0]);
+
+        glColor3f(0.216, 0.753, 0.318);
+        glBegin(GL_QUADS);
+            glNormal3f(0, 1, 0);
+            glTexCoord2f(0, 0);     glVertex3f(-20.0, 0.0, -20.0);
+            glTexCoord2f(0, 0.475); glVertex3f(-20.0, 0.0, -1.0);
+            glTexCoord2f(1, 0.475); glVertex3f( 20.0, 0.0, -1.0);
+            glTexCoord2f(1, 0);     glVertex3f( 20.0, 0.0, -20.0);
+
+            glTexCoord2f(0, 0.525); glVertex3f(-20.0, 0.0, 1.0);
+            glTexCoord2f(0, 1);     glVertex3f(-20.0, 0.0, 20.0);
+            glTexCoord2f(1, 1);     glVertex3f( 20.0, 0.0, 20.0);
+            glTexCoord2f(1, 0.525); glVertex3f( 20.0, 0.0, 1.0);
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+        glPushMatrix();
+            glColor3f(0.667, 0.667, 0.667);
+            glBegin(GL_QUADS);
+                  glVertex3f(-20.0, 0.0, 1.0);
+                  glVertex3f(-20.0, 0.0, -1.0);
+                  glVertex3f( 20.0, 0.0, -1.0);
+                  glVertex3f( 20.0, 0.0, 1.0);
+            glEnd();
+        glPopMatrix();
+
+        dfx_cube_draw(&cube);
     
     glPopMatrix();  /* MODELVIEW */
 
@@ -133,6 +211,15 @@ void init(void) {
     };
     kmcam_translate(&camera, camera_pos);
     aspect_ratio = 1.0;
+
+    dfx_cube_init(&cube);
+    GLdouble blue[3] = {
+        0.0, 
+        0.0, 
+        1.0
+    };
+    dfx_cube_set_pos(&cube, blue);
+    dfx_cube_set_color3d(&cube, blue);
 }
 
 int main(int argc, char **argv) {
@@ -148,6 +235,8 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
     glutReshapeFunc(reshape);
+
+    texture[0] = LoadTexBMP("bitmaps/grass.bmp");
     
     check_fail_gl_error();
     glutMainLoop();

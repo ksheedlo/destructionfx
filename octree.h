@@ -21,7 +21,7 @@
 #define ERROR   2
 
 /* Magic numbers */
-#define OCTREE_MAX_PREFERRED_SIZE   4
+#define OCTREE_MAX_PREFERRED_SIZE   8
 #define _MAX_NAME_LENGTH            64
 
 /* Flags */

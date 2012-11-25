@@ -72,6 +72,18 @@ void kmcam_getpos_world(GLdouble result[3], km_camera *cam) {
     result[2] = cam->position[2];
 }
 
+void kmcam_getpos_offset(GLdouble result[3], km_camera *cam, GLdouble vec[3]) {
+    GLdouble tmp[3];
+
+    /* Translate the camera, get it's position, translate back */
+    kmcam_translate(cam, vec);
+    kmcam_getpos_world(result, cam);
+    for (int i = 0; i < 3; i++) {
+        tmp[i] = -1.0*vec[i];
+    }
+    kmcam_translate(cam, tmp);
+}
+
 void kmcam_roty(km_camera *cam, GLdouble theta) {
     GLdouble *pos = cam->position;
     GLdouble *center = cam->center;

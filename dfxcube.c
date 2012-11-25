@@ -10,12 +10,14 @@
 
 #include "dfxcube.h"
 
-void dfx_cube_init(dfx_cube *cube) {
+void dfx_cube_init(dfx_cube *cube, GLdouble size) {
     /* Set at the origin */
     cube->position[0] = cube->position[1] = cube->position[2] = 0.0;
 
     /* Color to white, no transparency */
     cube->color[0] = cube->color[1] = cube->color[2] = cube->color[3] = 1.0;
+
+    cube->size = size;
 
     /* Don't use a texture */
     cube->texture = 0;
@@ -23,16 +25,16 @@ void dfx_cube_init(dfx_cube *cube) {
 }
 
 void dfx_cube_set_pos(dfx_cube *cube, GLdouble vec[3]) {
-    memcpy(cube->position, vec, sizeof(vec));
+    memcpy(cube->position, vec, 3 * sizeof(GLdouble));
 }
 
 void dfx_cube_set_color3d(dfx_cube *cube, GLdouble vec[3]) {
-    memcpy(cube->color, vec, sizeof(vec));
+    memcpy(cube->color, vec, 3 * sizeof(GLdouble));
     cube->color[3] = 1.0;
 }
 
 void dfx_cube_set_color4d(dfx_cube *cube, GLdouble vec[4]) {
-    memcpy(cube->color, vec, sizeof(vec));
+    memcpy(cube->color, vec, 4 * sizeof(GLdouble));
 }
 
 void dfx_cube_set_texture(dfx_cube *cube, unsigned int texture) {
@@ -73,6 +75,7 @@ void dfx_cube_draw(dfx_cube *cube) {
     glPushMatrix();
     
     glTranslated(cube->position[0], cube->position[1], cube->position[2]);
+    glScaled(cube->size, cube->size, cube->size);
 
     glBegin(GL_QUADS);
         /* Front face */
@@ -127,12 +130,12 @@ void dfx_cube_draw(dfx_cube *cube) {
 
 void dfx_cube_get_bounds(bounding_box *box, const void *data) {
     dfx_cube *cube = (dfx_cube *)data;
-    box->max_y = 1.0 + (double)(cube->position[1]);
-    box->min_y = (double)(cube->position[1]);
-    box->min_x = (double)(cube->position[0]);
-    box->max_x = 1.0 + (double)(cube->position[0]);
-    box->max_z = 1.0 + (double)(cube->position[2]);
-    box->min_z = (double)(cube->position[2]);
+    box->max_y = cube->size + (double)(cube->position[1]) - _DFX_CUBE_EPSILON;
+    box->min_y = (double)(cube->position[1]) + _DFX_CUBE_EPSILON;
+    box->min_x = (double)(cube->position[0]) + _DFX_CUBE_EPSILON;
+    box->max_x = cube->size + (double)(cube->position[0]) - _DFX_CUBE_EPSILON;
+    box->max_z = cube->size + (double)(cube->position[2]) - _DFX_CUBE_EPSILON;
+    box->min_z = (double)(cube->position[2]) + _DFX_CUBE_EPSILON;
 }
 
 void dfx_cube_init_octree_vol(octree_vol *vol, dfx_cube *cube) {

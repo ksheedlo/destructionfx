@@ -22,3 +22,17 @@ void _do_gl_error_check(char *filename, int line, int fail) {
         exit(err_pred);
     }
 }
+
+void _error_check(char *filename, int line, char *msg, int fail) {
+    fprintf(stderr, "%s:%d Error: %s\n", filename, line, msg);
+    if (fail) {
+        exit(1);
+    }
+}
+
+void write_string_wi(char *str, int x, int y, void *font) {
+    glWindowPos2i(x, y);
+    for(char *p = str; *p; p++) {
+        glutBitmapCharacter(font, *p);
+    }
+}

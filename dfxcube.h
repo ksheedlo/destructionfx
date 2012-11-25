@@ -25,17 +25,23 @@
 #include "octree.h"
 
 /* Flag definitions. */
-#define DFX_CUBE_DEFAULTS   0
 #define DFX_CUBE_TEXTURED   1
+#define DFX_CUBE_VISIBLE    2
+#define DFX_CUBE_DIRTY      4
+#define DFX_CUBE_DEFAULTS   DFX_CUBE_DIRTY
+
+/* Magic numbers */
+#define _DFX_CUBE_EPSILON   0.005
 
 typedef struct {
     GLdouble position[3];
     GLdouble color[4];
+    GLdouble size;
     unsigned int texture;
     int32_t flags;
 } dfx_cube;
 
-void dfx_cube_init(dfx_cube *cube);
+void dfx_cube_init(dfx_cube *cube, GLdouble size);
 
 void dfx_cube_set_pos(dfx_cube *cube, GLdouble vec[3]);
 

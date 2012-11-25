@@ -20,6 +20,7 @@ CUNITLIBS=$(shell pkg-config ./env/lib/pkgconfig/cunit.pc --libs)
 all: smash_raw test 
 
 kmcam.o: kmcam.c kmcam.h
+	$(CC) $(CFLAGS) -c $^
 
 util.o: util.c util.h
 	$(CC) $(CFLAGS) -c $^ 

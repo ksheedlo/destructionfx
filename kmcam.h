@@ -52,6 +52,13 @@ void kmcam_translate_world(km_camera *cam, GLdouble vec[3]);
  */
 void kmcam_getpos_world(GLdouble result[3], km_camera *cam);
 
+/* Gets a point offset relative to the camera.
+ *
+ * To get the world location of a point 1 unit in front of the camera, call this
+ * function with a vector [0, 0, 1].
+ */
+void kmcam_getpos_offset(GLdouble result[3], km_camera *cam, GLdouble vec[3]);
+
 /* rotx, roty, rotz -- rotates the camera about it's own axes
  *
  * theta is in degrees. Fairly self-explanatory. Axes are relative to the camera

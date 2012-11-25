@@ -36,6 +36,7 @@
 
 static km_camera camera;
 static double aspect_ratio;
+static int window_width, window_height;
 static dfx_cube cube;
 
 static int ambient = 30;
@@ -229,6 +230,24 @@ void display(void) {
     glMatrixMode(GL_PROJECTION);
     glPopMatrix(); /* PROJECTION */
 
+    glDisable(GL_DEPTH_TEST);
+    glPushMatrix(); /* PROJECTION */
+        gluOrtho2D(0, window_width, 0, window_height);
+        glColor3f(0.75, 0.75, 0.75);
+        float half_width = window_width / 2.0f;
+        float half_height = window_height / 2.0f;
+        glBegin(GL_LINES);
+            glVertex2f(half_width, half_height + 5.0f);
+            glVertex2f(half_width, half_height + 15.0f);
+            glVertex2f(half_width, half_height - 5.0f);
+            glVertex2f(half_width, half_height - 15.0f);
+            glVertex2f(half_width - 5.0f, half_height);
+            glVertex2f(half_width - 15.0f, half_height);
+            glVertex2f(half_width + 5.0f, half_height);
+            glVertex2f(half_width + 15.0f, half_height);
+        glEnd();
+    glPopMatrix();  /* PROJECTION */
+    
     glFlush();
     glutSwapBuffers();
     check_fail_gl_error();
@@ -293,6 +312,8 @@ void special(int k, int x, int y) {
 void reshape(int width, int height) {
     glViewport(0, 0, (GLint)width, (GLint)height);
     aspect_ratio = (double)width / (double)height;
+    window_width = width;
+    window_height = height;
     glutPostRedisplay();
 }
 

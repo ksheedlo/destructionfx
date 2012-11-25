@@ -36,6 +36,18 @@ smash_raw: smash.c octree.o kmcam.o util.o dfxcube.o CSCIx229.a
 test: test.c test.h octree.o
 	$(CC) $(CFLAGS) $(CUNITFLAGS) $(GDSLFLAGS) -o $@ $^ $(GDSLLIBS) $(CUNITLIBS)
 
+#  Generic compile rules
+.c.o:
+	gcc -c -O -Wall $<
+
+#  Generic compile and link
+%: %.c CSCIx229.a
+	gcc -Wall -O3 -o $@ $^ $(GLLIBS)
+
+#  Create archive (include glWindowPos here if you need it)
+CSCIx229.a:fatal.o loadtexbmp.o print.o project.o errcheck.o object.o
+	ar -rcs CSCIx229.a $^
+
 .PHONY: clean
 clean:
 	rm -rf *.o *.h.gch *.dSYM smash_raw test 

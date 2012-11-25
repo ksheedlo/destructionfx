@@ -136,6 +136,20 @@ void draw_voxel_elt(const octree_vol *volume) {
 
 void display(void) {
     char infobuf[INFOBUF_SIZE];
+    GLdouble cursor[3];
+    dfx_cube test_cube;
+    octree_vol vol;
+    GLdouble offset[3] = {
+        0.0, 
+        0.0,
+        1.5
+    };
+    kmcam_getpos_offset(cursor, &camera, offset);
+    dfx_cube_init(&test_cube, EPSILON);
+    dfx_cube_set_pos(&test_cube, cursor);
+    dfx_cube_init_octree_vol(&vol, &test_cube);
+    int collision = octree_collide(&tree, &vol);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -223,7 +237,7 @@ void display(void) {
         octree_traverse(&tree, draw_voxel_elt);
         glDisable(GL_LIGHTING);
         glColor3f(1.0, 1.0, 1.0);
-        snprintf(infobuf, INFOBUF_SIZE, "dfx_count: %d", dfx_count);
+        snprintf(infobuf, INFOBUF_SIZE, "collision%s detected", collision ? "" : " not");
         write_string_wi(infobuf, 10, 10, GLUT_BITMAP_HELVETICA_12);
     glPopMatrix();  /* MODELVIEW */
 
@@ -255,6 +269,15 @@ void display(void) {
 
 void keyboard(unsigned char k, int x, int y) {
     GLdouble transform[3] = {0.0, 0.0, 0.0};
+    GLdouble offset[3] = {
+        0.0, 
+        0.0,
+        1.5
+    };
+    GLdouble cursor[3];
+    octree_vol vol;
+    point3d point;
+
     switch (k) {
         case 'W':
         case 'w':
@@ -282,6 +305,16 @@ void keyboard(unsigned char k, int x, int y) {
             break;
         case 27: /* Escape */
             exit(0);
+            break;
+        case ' ':
+            kmcam_getpos_offset(cursor, &camera, offset);
+            point.x = cursor[0];
+            point.y = cursor[1];
+            point.z = cursor[2];
+            int result = octree_delete(&vol, &tree, &point);
+            if (result) {
+                free(vol.data);
+            }
             break;
         default:
             return;

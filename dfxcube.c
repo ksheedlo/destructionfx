@@ -68,6 +68,7 @@ void dfx_cube_draw(dfx_cube *cube) {
     if (cube->flags & DFX_CUBE_TEXTURED) {
         texfunc = glTexCoord2f;
         glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, cube->texture);
     } else {
         texfunc = _dfx_cube_2f_nop;
     }

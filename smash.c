@@ -13,6 +13,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
+#include<float.h>
 
 #if defined(__APPLE__) || defined(MACOSX)
     #include<GLUT/glut.h>
@@ -24,6 +25,8 @@
     #include <GL/glu.h>
 #endif
 
+#include<gdsl_list.h>
+
 #include "CSCIx229.h"
 
 #include "kmcam.h"
@@ -33,6 +36,7 @@
 
 #define EPSILON 0.005
 #define INFOBUF_SIZE 64
+#define STEP_SIZE 0.17321
 
 static km_camera camera;
 static double aspect_ratio;
@@ -244,6 +248,8 @@ void display(void) {
     glMatrixMode(GL_PROJECTION);
     glPopMatrix(); /* PROJECTION */
 
+    check_fail_gl_error();
+
     glDisable(GL_DEPTH_TEST);
     glPushMatrix(); /* PROJECTION */
         gluOrtho2D(0, window_width, 0, window_height);
@@ -275,38 +281,47 @@ void keyboard(unsigned char k, int x, int y) {
         1.5
     };
     GLdouble cursor[3];
-    octree_vol vol;
+    octree_vol *vol, *min_v, elt;
+    double min_t;
     point3d point;
+    ray3d ray;
+    bounding_box bounds;
+    double results[2];
+    int test;
+    gdsl_list_t list;
+    gdsl_list_cursor_t list_cursor;
+    size_t len;
 
     switch (k) {
         case 'W':
         case 'w':
             /* Move one step forward */
-            transform[2] = 0.2;
+            transform[2] = STEP_SIZE;
             kmcam_translate(&camera, transform);
             break;
         case 'A':
         case 'a':
             /* Move one step to the left */
-            transform[0] = -0.2;
+            transform[0] = -STEP_SIZE;
             kmcam_translate(&camera, transform);
             break;
         case 'S':
         case 's':
             /* Move one step back */
-            transform[2] = -0.2;
+            transform[2] = -STEP_SIZE;
             kmcam_translate(&camera, transform);
             break;
         case 'D':
         case 'd':
             /* Move one step to the right */
-            transform[0] = 0.2;
+            transform[0] = STEP_SIZE;
             kmcam_translate(&camera, transform);
             break;
         case 27: /* Escape */
             exit(0);
             break;
         case ' ':
+#if 0
             kmcam_getpos_offset(cursor, &camera, offset);
             point.x = cursor[0];
             point.y = cursor[1];
@@ -315,6 +330,46 @@ void keyboard(unsigned char k, int x, int y) {
             if (result) {
                 free(vol.data);
             }
+#endif
+            kmcam_getpos_offset(cursor, &camera, offset);
+            ray.dx = camera.center[0] - camera.position[0];
+            ray.dy = camera.center[1] - camera.position[1];
+            ray.dz = camera.center[2] - camera.position[2];
+            ray.sx = cursor[0];
+            ray.sy = cursor[1];
+            ray.sz = cursor[2];
+            list = gdsl_list_alloc("tmp:keyboard", _octree_elt_alloc, _octree_elt_free);
+            list_cursor = gdsl_list_cursor_alloc(list);
+            gdsl_list_cursor_move_to_head(list_cursor);
+            len = octree_query_line(list, &tree, &ray);
+            min_t = 0.0;
+            for (uint32_t i = 0; i < len; i++) {    
+                vol = (octree_vol *)gdsl_list_cursor_get_content(list_cursor);
+                _get_octree_volume_bounds(&bounds, vol);
+                bounds_intersect_line(results, &bounds, &ray);
+                double t = DBL_MAX;
+                if (results[0] >= 0 && results[0] < t) {
+                    t = results[0];
+                }
+                if (results[1] >= 0 && results[1] < t) {
+                    t = results[1];
+                }
+                if (t < min_t) {
+                    min_t = t;
+                    min_v = vol;
+                }
+                gdsl_list_cursor_step_forward(list_cursor);
+            }
+            _get_octree_volume_bounds(&bounds, min_v);
+            point.x = (bounds.min_x + bounds.max_x) / 2.0;
+            point.y = (bounds.min_y + bounds.max_y) / 2.0;
+            point.z = (bounds.min_z + bounds.max_z) / 2.0;
+            test = octree_delete(&elt, &tree, &point);
+            if (test) {
+                free(elt.data);
+            }
+            gdsl_list_cursor_free(list_cursor);
+            gdsl_list_free(list);
             break;
         default:
             return;
@@ -359,10 +414,12 @@ void idle(void) {
 void init(void) {
     kmcam_init(&camera); 
 
+    window_width = glutGet(GLUT_WINDOW_WIDTH);
+    window_height = glutGet(GLUT_WINDOW_HEIGHT);
     GLdouble camera_pos[3] = {
-        0.0,
+        0.1,
         1.11,
-        -6.0
+        -6.1
     };
     kmcam_translate(&camera, camera_pos);
     aspect_ratio = 1.0;
@@ -371,8 +428,8 @@ void init(void) {
 
     GLdouble color[3] = {
         1.0, 
-        0.0, 
-        0.0
+        1.0, 
+        1.0
     };
 
     GLdouble xxpos[3] = {
@@ -401,6 +458,7 @@ void init(void) {
                 };
                 dfx_cube_set_pos(cube, pos);
                 dfx_cube_set_color3d(cube, color);
+                dfx_cube_set_texture(cube, texture[1]);
                 dfx_cube_init_octree_vol(&vol, cube);
                 int result = octree_insert(&tree, &vol, OCTREE_DEFAULTS);
                 if (result == FALSE) {
@@ -422,7 +480,6 @@ int main(int argc, char **argv) {
     glutInitWindowPosition(0, 0);
     glutInitWindowSize(600, 600);
     glutCreateWindow("Smashy Breaky Smash!");
-    init();
 
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
@@ -430,7 +487,10 @@ int main(int argc, char **argv) {
     glutReshapeFunc(reshape);
 
     texture[0] = LoadTexBMP("bitmaps/grass.bmp");
+    texture[1] = LoadTexBMP("bitmaps/brick_1.bmp");
     
+    init();
+
     check_fail_gl_error();
     glutMainLoop();
     return 0;

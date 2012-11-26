@@ -31,7 +31,7 @@
 #define DFX_CUBE_DEFAULTS   DFX_CUBE_DIRTY
 
 /* Magic numbers */
-#define _DFX_CUBE_EPSILON   0.005
+#define _DFX_CUBE_EPSILON   0.001
 
 typedef struct {
     GLdouble position[3];

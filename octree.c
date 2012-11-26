@@ -316,7 +316,39 @@ int octree_query_range(gdsl_list_t results,
     }
     gdsl_list_cursor_free(cursor);
     for (int i = 0; i < 8; i++) {
-        count += octree_query_range(results, tree->child[i], box);
+        if (tree->child[i] != NULL) {
+            count += octree_query_range(results, tree->child[i], box);
+        }
+    }
+    return count;
+}
+
+int octree_query_line(gdsl_list_t results, const octree_n *tree, const ray3d *ray) {
+    bounding_box bounds;
+    gdsl_list_t volumes = tree->volumes;
+    size_t volumes_len;
+    int32_t count = 0;
+    _get_octree_bounds(&bounds, tree);
+    if (!bounds_intersect_line(NULL, &bounds, ray)) {
+        return 0;
+    }
+    volumes_len = gdsl_list_get_size(volumes);
+    gdsl_list_cursor_t cursor = gdsl_list_cursor_alloc(volumes);
+    gdsl_list_cursor_move_to_head(cursor);
+    for (uint32_t i = 0; i < volumes_len; i++) {
+        octree_vol *vol = (octree_vol *)gdsl_list_cursor_get_content(cursor);
+        _get_octree_volume_bounds(&bounds, vol);
+        if (bounds_intersect_line(NULL, &bounds, ray)) {
+            gdsl_list_insert_tail(results, vol);
+            count++;
+        }
+        gdsl_list_cursor_step_forward(cursor);
+    }
+    gdsl_list_cursor_free(cursor);
+    for (int i = 0; i < 8; i++) {
+        if (tree->child[i] != NULL) {
+            count += octree_query_line(results, tree->child[i], ray);
+        }
     }
     return count;
 }
@@ -359,6 +391,82 @@ int bounds_contain_point(const bounding_box *box, const point3d *point) {
     return (box->min_x <= point->x && point->x <= box->max_x) &&
         (box->min_y <= point->y && point->y <= box->max_y) &&
         (box->min_z <= point->z && point->z <= box->max_z);
+}
+
+int bounds_intersect_line(double *results, const bounding_box *box, const ray3d *ray) {
+    double dt, x, y, z;
+    double tmp_results[2];
+    int null_results = results == NULL;
+    int i = 0;
+    if (ray->dx != 0.0) {
+        dt = (box->min_x - ray->sx) / ray->dx;
+        y = ray->sy + (dt*ray->dy);
+        z = ray->sz + (dt*ray->dz);
+        if ((box->min_y <= y) && (y <= box->max_y) && (box->min_z <= z) && (z <= box->max_z)) {
+            tmp_results[(i%2)] = dt;
+            i++;
+        }
+        dt = (box->max_x - ray->sx) / ray->dx;
+        y = ray->sy + (dt*ray->dy);
+        z = ray->sz + (dt*ray->dz);
+        if ((box->min_y <= y) && (y <= box->max_y) && (box->min_z <= z) && (z <= box->max_z)) {
+            tmp_results[(i%2)] = dt;
+            i++;
+        }
+    } else if (ray->sx < box->min_x || ray->sx > box->max_x) {
+        return FALSE;
+    }
+    
+    if (ray->dy != 0.0) {
+        dt = (box->min_y - ray->sy) / ray->dy;
+        x = ray->sx + (dt*ray->dx);
+        z = ray->sz + (dt*ray->dz);
+        if ((box->min_x <= x) && (x <= box->max_x) && (box->min_z <= z) && (z <= box->max_z)) {
+            tmp_results[(i%2)] = dt;
+            i++;
+        }
+        dt = (box->max_y - ray->sy) / ray->dy;
+        x = ray->sx + (dt*ray->dx);
+        z = ray->sz + (dt*ray->dz);
+        if ((box->min_x <= x) && (x <= box->max_x) && (box->min_z <= z) && (z <= box->max_z)) {
+            tmp_results[(i%2)] = dt;
+            i++;
+        }
+    } else if (ray->sy < box->min_y || ray->sy > box->max_y) {
+        return FALSE;
+    }
+
+    if (ray->dz != 0.0) {
+        dt = (box->min_z - ray->sz) / ray->dz;
+        x = ray->sx + (dt*ray->dx);
+        y = ray->sy + (dt*ray->dy);
+        if ((box->min_x <= x) && (x <= box->max_x) && (box->min_y <= y) && (y <= box->max_y)) {
+            tmp_results[(i%2)] = dt;
+            i++;
+        }
+        dt = (box->min_z - ray->sz) / ray->dz;
+        x = ray->sx + (dt*ray->dx);
+        y = ray->sy + (dt*ray->dy);
+        if ((box->min_x <= x) && (x <= box->max_x) && (box->min_y <= y) && (y <= box->max_y)) {
+            tmp_results[(i%2)] = dt;
+            i++;
+        }
+    } else if (ray->sz < box->min_z || ray->sz > box->max_z) {
+        return FALSE;
+    }
+
+    if (i < 2) {
+        return FALSE;
+    }
+    if (tmp_results[0] > tmp_results[1]) {
+        double tmp = tmp_results[0];
+        tmp_results[0] = tmp_results[1];
+        tmp_results[1] = tmp;
+    }
+    if (!null_results) {
+        memcpy(results, tmp_results, 2*sizeof(double));
+    }
+    return TRUE;
 }
 
 void _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume) {

@@ -63,6 +63,11 @@ typedef struct {
 } bounding_box;
 
 typedef struct {
+    double sx, sy, sz;
+    double dx, dy, dz;
+} ray3d;
+
+typedef struct {
     void *data;
     void (*get_bounds)(bounding_box *, const void *);
 } octree_vol;
@@ -136,6 +141,15 @@ int bounds_contain(const bounding_box *lhs, const bounding_box *rhs);
 
 int bounds_contain_point(const bounding_box *box, const point3d *point);
 
+/* Tests box and a ray for intersection.
+ *
+ * If the box and ray intersect, returns TRUE and places t-values in results[0]
+ * and results[1]. Otherwise, FALSE is returned and results is not modified.
+ * If results is NULL, it will not be modified regardless of whether an 
+ * intersection is detected.
+ */
+int bounds_intersect_line(double *results, const bounding_box *box, const ray3d *ray);
+
 /* Queries the octree for results intersecting the given volume.
  *
  * Parameters:
@@ -150,6 +164,8 @@ int octree_query_range(gdsl_list_t results,
                        const octree_n *tree, 
                        const bounding_box *box
                        );
+
+int octree_query_line(gdsl_list_t results, const octree_n *tree, const ray3d *ray);
 
 void _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume);
 

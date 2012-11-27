@@ -339,7 +339,9 @@ int octree_query_line(gdsl_list_t results, const octree_n *tree, const ray3d *ra
         octree_vol *vol = (octree_vol *)gdsl_list_cursor_get_content(cursor);
         _get_octree_volume_bounds(&bounds, vol);
         if (bounds_intersect_line(NULL, &bounds, ray)) {
-            gdsl_list_insert_tail(results, vol);
+            if(gdsl_list_insert_tail(results, vol) == NULL) {
+                return ERROR;
+            }
             count++;
         }
         gdsl_list_cursor_step_forward(cursor);
@@ -347,7 +349,12 @@ int octree_query_line(gdsl_list_t results, const octree_n *tree, const ray3d *ra
     gdsl_list_cursor_free(cursor);
     for (int i = 0; i < 8; i++) {
         if (tree->child[i] != NULL) {
-            count += octree_query_line(results, tree->child[i], ray);
+            int result = octree_query_line(results, tree->child[i], ray);
+            if (result == ERROR) {
+                return ERROR;
+            } else {
+                count += result;
+            }
         }
     }
     return count;
@@ -480,4 +487,24 @@ void _get_octree_bounds(bounding_box *box, const octree_n *tree) {
     box->max_y = tree->y + tree->height;
     box->min_z = tree->z;
     box->max_z = tree->z + tree->depth;
+}
+
+void write_octree_vol(const gdsl_element_t elt, FILE *output, gdsl_location_t loc, void *data) {
+    octree_vol *vol = (octree_vol *)elt;
+    bounding_box bounds;
+    _get_octree_volume_bounds(&bounds, vol);
+    if (loc == GDSL_LOCATION_HEAD) {
+        fprintf(output, "[");
+    }
+    fprintf(output, 
+            "{get_bounds: %p, data: {x: [%f, %f], y: [%f, %f], z: [%f, %f]}}%s",
+            vol->get_bounds,
+            bounds.min_x,
+            bounds.max_x,
+            bounds.min_y,
+            bounds.max_y,
+            bounds.min_z,
+            bounds.max_z,
+            loc == GDSL_LOCATION_TAIL ? "]" : ", "
+            );
 }

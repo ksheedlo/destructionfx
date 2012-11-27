@@ -18,7 +18,7 @@
 
 #define TRUE    1
 #define FALSE   0
-#define ERROR   2
+#define ERROR   -1
 
 /* Magic numbers */
 #define OCTREE_MAX_PREFERRED_SIZE   8
@@ -170,5 +170,7 @@ int octree_query_line(gdsl_list_t results, const octree_n *tree, const ray3d *ra
 void _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume);
 
 void _get_octree_bounds(bounding_box *box, const octree_n *tree);
+
+void write_octree_vol(const gdsl_element_t elt, FILE *output, gdsl_location_t loc, void *data);
 
 #endif

@@ -240,6 +240,19 @@ void display(void) {
         dfx_count = 0;
         octree_traverse(&tree, draw_voxel_elt);
         glDisable(GL_LIGHTING);
+
+        /* Draw the camera's line of sight */
+#if 0
+        glColor3f(0.0, 0.0, 0.0);
+        glBegin(GL_LINES);
+            GLdouble dx, dy, dz;
+            dx = camera.center[0] - camera.position[0];
+            dy = camera.center[1] - camera.position[1];
+            dz = camera.center[2] - camera.position[2];
+            glVertex3f(cursor[0], cursor[1], cursor[2]);
+            glVertex3f(cursor[0] + 10*dx + 1.0, cursor[1] + 10*dy + 1.0, cursor[2] + 10*dz);
+        glEnd();
+#endif
         glColor3f(1.0, 1.0, 1.0);
         snprintf(infobuf, INFOBUF_SIZE, "collision%s detected", collision ? "" : " not");
         write_string_wi(infobuf, 10, 10, GLUT_BITMAP_HELVETICA_12);
@@ -281,7 +294,7 @@ void keyboard(unsigned char k, int x, int y) {
         1.5
     };
     GLdouble cursor[3];
-    octree_vol *vol, *min_v, elt;
+    octree_vol *vol, *min_v = NULL, elt;
     double min_t;
     point3d point;
     ray3d ray;
@@ -338,11 +351,11 @@ void keyboard(unsigned char k, int x, int y) {
             ray.sx = cursor[0];
             ray.sy = cursor[1];
             ray.sz = cursor[2];
-            list = gdsl_list_alloc("tmp:keyboard", _octree_elt_alloc, _octree_elt_free);
+            list = gdsl_list_alloc("tmp:keyboard", NULL, NULL);
+            len = octree_query_line(list, &tree, &ray);
+            min_t = DBL_MAX;
             list_cursor = gdsl_list_cursor_alloc(list);
             gdsl_list_cursor_move_to_head(list_cursor);
-            len = octree_query_line(list, &tree, &ray);
-            min_t = 0.0;
             for (uint32_t i = 0; i < len; i++) {    
                 vol = (octree_vol *)gdsl_list_cursor_get_content(list_cursor);
                 _get_octree_volume_bounds(&bounds, vol);
@@ -360,13 +373,15 @@ void keyboard(unsigned char k, int x, int y) {
                 }
                 gdsl_list_cursor_step_forward(list_cursor);
             }
-            _get_octree_volume_bounds(&bounds, min_v);
-            point.x = (bounds.min_x + bounds.max_x) / 2.0;
-            point.y = (bounds.min_y + bounds.max_y) / 2.0;
-            point.z = (bounds.min_z + bounds.max_z) / 2.0;
-            test = octree_delete(&elt, &tree, &point);
-            if (test) {
-                free(elt.data);
+            if (min_v != NULL) {
+                _get_octree_volume_bounds(&bounds, min_v);
+                point.x = (bounds.min_x + bounds.max_x) / 2.0;
+                point.y = (bounds.min_y + bounds.max_y) / 2.0;
+                point.z = (bounds.min_z + bounds.max_z) / 2.0;
+                test = octree_delete(&elt, &tree, &point);
+                if (test) {
+                    free(elt.data);
+                }
             }
             gdsl_list_cursor_free(list_cursor);
             gdsl_list_free(list);

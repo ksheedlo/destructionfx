@@ -56,4 +56,6 @@ void random_uvec(double *result, FILE *rng, size_t dim);
 
 void unitize(double *vec, size_t dim);
 
+void scale_vector(double *vec, double scl, size_t dim);
+
 #endif

@@ -23,6 +23,8 @@ void dfx_fragment_init(dfx_fragment *fragment) {
     fragment->color[1] = 0.173;
     fragment->color[2] = 0.078;
     fragment->color[3] = 1.0;
+
+    fragment->vel[0] = fragment->vel[1] = fragment->vel[2] = 0.0;
 }
 
 void dfx_fragment_set_pos(dfx_fragment *fragment, GLdouble vec[3]) {
@@ -99,4 +101,28 @@ void dfx_fragment_get_bounds(bounding_box *box, const void *data) {
 void dfx_fragment_init_octree_vol(octree_vol *vol, dfx_fragment *fragment) {
     vol->data = fragment;
     vol->get_bounds = dfx_fragment_get_bounds;
+}
+
+void dfx_fragment_step(dfx_fragment *fragment, const double dt, const double gravity) {
+    dfx_fragment_rotate(fragment, dt*SPIN_RATE);
+
+    fragment->position[0] += (fragment->vel[0] * dt);
+    fragment->position[1] += (fragment->vel[1] * dt);
+    fragment->position[2] += (fragment->vel[2] * dt);
+
+    fragment->vel[1] += (gravity * dt);
+}
+
+void dfx_fragment_set_vel(dfx_fragment *fragment, GLdouble vel[3]) {
+    memcpy(fragment->vel, vel, 3*sizeof(GLdouble));
+}
+
+gdsl_element_t dfx_fragment_copy_alloc(void *data) {
+    dfx_fragment *new_fragment = malloc(sizeof(*new_fragment));
+    memcpy(new_fragment, data, sizeof(dfx_fragment));
+    return (gdsl_element_t)new_fragment;
+}
+
+void dfx_fragment_copy_free(gdsl_element_t elt) {
+    free(elt);
 }

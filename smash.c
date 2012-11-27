@@ -38,12 +38,17 @@
 #define EPSILON 0.005
 #define INFOBUF_SIZE 64
 #define STEP_SIZE 0.17321
+#define GRAVITY 3.215
+
+/* Number of fragments ejected from a brick smash */
+#define FRAGMENT_COUNT  4
+
+#define FRAGMENT_SPEED  2.0
 
 static km_camera camera;
 static double aspect_ratio;
 static int window_width, window_height;
 static double t0 = -1.0;
-static dfx_fragment fragment;
 static FILE *rng;
 
 static int ambient = 30;
@@ -55,6 +60,7 @@ static int dfx_count;
 static unsigned int texture[4];
 
 static octree_n tree;
+static gdsl_list_t fragment_list;
 
 void draw_voxel_elt(const octree_vol *volume) {
     dfx_cube *cube = (dfx_cube *)(volume->data);
@@ -62,11 +68,34 @@ void draw_voxel_elt(const octree_vol *volume) {
     dfx_cube_draw(cube);
 }
 
+void make_frags(point3d *point) {
+    GLdouble position[3] = {
+        point->x,
+        point->y,
+        point->z
+    };
+    for (int i = 0; i < FRAGMENT_COUNT; i++) {
+        dfx_fragment frag;
+        GLdouble vec[3];
+        dfx_fragment_init(&frag);
+        dfx_fragment_set_pos(&frag, position);
+        random_uvec(vec, rng, 3);
+        scale_vector(vec, FRAGMENT_SPEED, 3);
+        dfx_fragment_set_vel(&frag, vec);
+        random_uvec(vec, rng, 3);
+        dfx_fragment_set_rotv(&frag, vec);
+        gdsl_list_insert_tail(fragment_list, &frag);
+    }
+}
+
 void display(void) {
     char infobuf[INFOBUF_SIZE];
     GLdouble cursor[3];
     dfx_cube test_cube;
     octree_vol vol;
+    size_t fragment_ct = gdsl_list_get_size(fragment_list);
+    gdsl_list_cursor_t lst_cursor;
+
     GLdouble offset[3] = {
         0.0, 
         0.0,
@@ -159,7 +188,14 @@ void display(void) {
             glEnd();
         glPopMatrix();
 
-        dfx_fragment_draw(&fragment);
+        lst_cursor = gdsl_list_cursor_alloc(fragment_list);
+        gdsl_list_cursor_move_to_head(lst_cursor);
+        for (uint32_t i = 0; i < fragment_ct; i++) {
+            dfx_fragment *fragment = (dfx_fragment *)gdsl_list_cursor_get_content(lst_cursor);
+            dfx_fragment_draw(fragment);
+            gdsl_list_cursor_step_forward(lst_cursor);
+        }
+        gdsl_list_cursor_free(lst_cursor);
 
         dfx_count = 0;
         octree_traverse(&tree, draw_voxel_elt);
@@ -305,6 +341,7 @@ void keyboard(unsigned char k, int x, int y) {
                 test = octree_delete(&elt, &tree, &point);
                 if (test) {
                     free(elt.data);
+                    make_frags(&point);
                 }
             }
             gdsl_list_cursor_free(list_cursor);
@@ -346,20 +383,39 @@ void reshape(int width, int height) {
 
 void idle(void) {
     double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    double ng_vel = 120.0;  /* degrees per second */
 
     if (t0 < 0.0) {
         t0 = t;
     }
     dt = t - t0;
     t0 = t;
-    dfx_fragment_rotate(&fragment, dt * ng_vel);
+
+    size_t fragment_ct = gdsl_list_get_size(fragment_list);
+    if (fragment_ct > 0) {
+        gdsl_list_cursor_t cursor = gdsl_list_cursor_alloc(fragment_list);
+        gdsl_list_cursor_move_to_head(cursor);
+
+        for(uint32_t i = 0; i < fragment_ct; i++) {
+            octree_vol vol;
+            dfx_fragment *fragment = (dfx_fragment *)gdsl_list_cursor_get_content(cursor);
+            dfx_fragment_step(fragment, dt, -GRAVITY);
+            dfx_fragment_init_octree_vol(&vol, fragment);
+            if ((!octree_contains(&tree, &vol)) || octree_collide(&tree, &vol)) {
+                gdsl_list_cursor_delete(cursor);
+                fragment_ct--;
+            } else {
+                gdsl_list_cursor_step_forward(cursor);
+            }
+        }
+        gdsl_list_cursor_free(cursor);
+    }
     glutPostRedisplay();
 }
 
 void cleanup() {
     fclose(rng);
     octree_destroy(&tree, OCTREE_FREE_DATA);
+    gdsl_list_free(fragment_list);
 }
 
 void init(void) {
@@ -414,14 +470,11 @@ void init(void) {
 
     glClearColor(0.239, 0.776, 0.890, 1.0);
 
-    dfx_fragment_init(&fragment);
-    GLdouble fragment_pos[3] = {
-        -5.0,
-        1.0, 
-        0.0
-    };
-    dfx_fragment_set_pos(&fragment, fragment_pos);
-    dfx_fragment_set_scale(&fragment, 2.0);
+    fragment_list = gdsl_list_alloc(
+                            "global:fragment", 
+                            dfx_fragment_copy_alloc, 
+                            dfx_fragment_copy_free
+                        );
 
     rng = fopen("/dev/urandom", "r");
     if (rng == NULL) {

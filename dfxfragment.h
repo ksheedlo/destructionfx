@@ -26,6 +26,8 @@
 #include "octree.h"
 
 /*Magic Numbers */
+/* Spin rate in free-fall, in degrees per second. */
+#define SPIN_RATE   720.0
 
 /* Computed based on the radius of a tetrahedron of unit side length. */
 #define BOUNDING_RADIUS 0.612
@@ -62,5 +64,9 @@ void dfx_fragment_draw(dfx_fragment *fragment);
 void dfx_fragment_get_bounds(bounding_box *box, const void *data);
 
 void dfx_fragment_init_octree_vol(octree_vol *vol, dfx_fragment *fragment);
+
+gdsl_element_t dfx_fragment_copy_alloc(void *data);
+
+void dfx_fragment_copy_free(gdsl_element_t elt);
 
 #endif

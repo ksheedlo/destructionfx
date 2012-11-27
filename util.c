@@ -72,3 +72,9 @@ void unitize(double *vec, size_t dim) {
         vec[i] /= norm;
     }
 }
+
+void scale_vector(double *vec, double scl, size_t dim) {
+    for (uint32_t i = 0; i < dim; i++) {
+        vec[i] *= scl;
+    }
+}

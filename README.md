@@ -24,9 +24,9 @@ From there, you should be able to build and run the code.
 
 ## Controls
 
-WASD - Move
-Space - Shoot invisible ray
-Arrow keys - Rotate and tilt the camera
+WASD - Move  
+Space - Shoot invisible ray  
+Arrow keys - Rotate and tilt the camera  
 
 ## Review Update
 

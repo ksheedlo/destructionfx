@@ -31,7 +31,10 @@ octree.o: octree.c octree.h
 dfxcube.o: dfxcube.c dfxcube.h 
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
-smash_raw: smash.c octree.o kmcam.o util.o dfxcube.o CSCIx229.a
+dfxfragment.o: dfxfragment.c dfxfragment.h
+	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
+
+smash_raw: smash.c octree.o kmcam.o util.o dfxcube.o dfxfragment.o CSCIx229.a
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
 
 test: test.c test.h octree.o
@@ -48,6 +51,10 @@ test: test.c test.h octree.o
 #  Create archive (include glWindowPos here if you need it)
 CSCIx229.a:fatal.o loadtexbmp.o print.o project.o errcheck.o object.o
 	ar -rcs CSCIx229.a $^
+
+.PHONY: archive
+archive:
+	tar cjvf review.tar.bz2 *.[hc] Makefile README.md smash runtests setup.sh bitmaps
 
 .PHONY: clean
 clean:

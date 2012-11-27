@@ -36,3 +36,39 @@ void write_string_wi(char *str, int x, int y, void *font) {
         glutBitmapCharacter(font, *p);
     }
 }
+
+double randf(FILE *rng) {
+    union _u_rng rgen;
+    fread(&rgen, sizeof(rgen), 1, rng);
+    rgen.int_val = (rgen.int_val & _RNG_LO_MASK) | _RNG_HI_MASK;
+    return rgen.dbl_val - 1.0;
+}
+
+void nrandf(double *results, FILE *rng, size_t n) {
+    union _u_rng *rgenp;
+    if ((rgenp = malloc(n * sizeof(union _u_rng))) == NULL) {
+        results[0] = nan("dvich");
+        return;
+    }
+    fread(rgenp, sizeof(union _u_rng), n, rng);
+    for (uint32_t i = 0; i < n; i++) {
+        rgenp[i].int_val = (rgenp[i].int_val & _RNG_LO_MASK) | _RNG_HI_MASK;
+        results[i] = rgenp[i].dbl_val - 1.0;
+    }
+}
+
+void random_uvec(double *result, FILE *rng, size_t dim) {
+    nrandf(result, rng, dim);
+    unitize(result, dim);
+}
+
+void unitize(double *vec, size_t dim) {
+    double sum = 0.0, norm;
+    for (uint32_t i = 0; i < dim; i++) {
+        sum += (vec[i] * vec[i]);
+    }
+    norm = sqrt(sum);
+    for (uint32_t i = 0; i < dim; i++) {
+        vec[i] /= norm;
+    }
+}

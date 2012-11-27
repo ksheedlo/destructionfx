@@ -32,6 +32,7 @@
 #include "kmcam.h"
 #include "octree.h"
 #include "dfxcube.h"
+#include "dfxfragment.h"
 #include "util.h"
 
 #define EPSILON 0.005
@@ -41,7 +42,9 @@
 static km_camera camera;
 static double aspect_ratio;
 static int window_width, window_height;
-static dfx_cube cube;
+static double t0 = -1.0;
+static dfx_fragment fragment;
+static FILE *rng;
 
 static int ambient = 30;
 static int diffuse = 100;
@@ -57,85 +60,6 @@ void draw_voxel_elt(const octree_vol *volume) {
     dfx_cube *cube = (dfx_cube *)(volume->data);
 
     dfx_cube_draw(cube);
-#if 0
-    /* If the cube is invisible and not dirty, stop here */
-    if (!(cube->flags & (DFX_CUBE_VISIBLE | DFX_CUBE_DIRTY))) {
-        return;
-    } else if (cube->flags & DFX_CUBE_VISIBLE) {
-        /* Cube is visible and doesn't need a dirty check */
-        dfx_cube_draw(cube);
-    }
-    /* Check to see if this is an interior node. If so, don't draw it. */
-    GLdouble size = cube->size;
-    GLdouble half_size = size / 2;
-    GLdouble center_x = cube->position[0] + half_size;
-    GLdouble center_y = cube->position[1] + half_size;
-    GLdouble center_z = cube->position[2] - half_size;
-
-    GLdouble points[6][3] = {
-        { 
-            /* Left */
-            center_x - size, 
-            center_y,
-            center_z
-        },
-        {
-            /* Top */
-            center_x,
-            center_y + size,
-            center_z
-        },
-        {
-            /* Bottom */
-            center_x,
-            center_y - size,
-            center_z
-        },
-        {
-            /* Back */
-            center_x,
-            center_y,
-            center_z + size
-        },
-        {
-            /* Front */
-            center_x,
-            center_y,
-            center_z - size
-        },
-        {
-            /* Right */
-            center_x + size,
-            center_y,
-            center_z
-        }
-    };
-    dfx_cube test;
-    octree_vol vol;
-    dfx_cube_init(&test, EPSILON);
-    dfx_cube_init_octree_vol(&vol, &test);
-
-    for (int i = 0; i < 6; i++) {
-        dfx_cube_set_pos(&test, points[i]);
-        if (i == 4) {
-            glColor3f(0.0, 1.0, 0.0);
-        } else {
-            glColor3f(1.0, 1.0, 0.0);
-        }
-        glBegin(GL_POINTS);
-            glVertex3d(points[i][0], points[i][1], points[i][2]);
-        glEnd();
-        if (!octree_collide(&tree, &vol)) {
-            /* Clear the dirty bit, set the visible bit */
-            cube->flags ^= DFX_CUBE_DIRTY;
-            cube->flags |= DFX_CUBE_VISIBLE;
-            dfx_cube_draw(cube);
-            return;
-        }
-    }
-    /* Clear the dirty and visible bits */
-    cube->flags &= ~(DFX_CUBE_DIRTY | DFX_CUBE_VISIBLE);
-#endif
 }
 
 void display(void) {
@@ -235,7 +159,7 @@ void display(void) {
             glEnd();
         glPopMatrix();
 
-        dfx_cube_draw(&cube);
+        dfx_fragment_draw(&fragment);
 
         dfx_count = 0;
         octree_traverse(&tree, draw_voxel_elt);
@@ -421,9 +345,21 @@ void reshape(int width, int height) {
 }
 
 void idle(void) {
-    /* TODO: Register this with glutIdleFunc() once we figure out what the
-     *       idle behavior is going to be. For now this is a no-op.
-     */
+    double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    double ng_vel = 120.0;  /* degrees per second */
+
+    if (t0 < 0.0) {
+        t0 = t;
+    }
+    dt = t - t0;
+    t0 = t;
+    dfx_fragment_rotate(&fragment, dt * ng_vel);
+    glutPostRedisplay();
+}
+
+void cleanup() {
+    fclose(rng);
+    octree_destroy(&tree, OCTREE_FREE_DATA);
 }
 
 void init(void) {
@@ -446,15 +382,6 @@ void init(void) {
         1.0, 
         1.0
     };
-
-    GLdouble xxpos[3] = {
-        -5.0,
-        0.0,
-        0.0
-    };
-    dfx_cube_init(&cube, 1.0);
-    dfx_cube_set_pos(&cube, xxpos);
-    dfx_cube_set_color3d(&cube, color);
 
     /* Populate the tree with cubes */
     for (int i = 0; i < 16; i++) {
@@ -486,6 +413,21 @@ void init(void) {
     }
 
     glClearColor(0.239, 0.776, 0.890, 1.0);
+
+    dfx_fragment_init(&fragment);
+    GLdouble fragment_pos[3] = {
+        -5.0,
+        1.0, 
+        0.0
+    };
+    dfx_fragment_set_pos(&fragment, fragment_pos);
+    dfx_fragment_set_scale(&fragment, 2.0);
+
+    rng = fopen("/dev/urandom", "r");
+    if (rng == NULL) {
+        FATAL_ERROR("fopen rng");
+    }
+    atexit(cleanup);
 }
 
 int main(int argc, char **argv) {
@@ -500,6 +442,7 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
     glutReshapeFunc(reshape);
+    glutIdleFunc(idle);
 
     texture[0] = LoadTexBMP("bitmaps/grass.bmp");
     texture[1] = LoadTexBMP("bitmaps/brick_1.bmp");

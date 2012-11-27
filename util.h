@@ -15,6 +15,8 @@
 
 #include<stdlib.h>
 #include<stdio.h>
+#include<stdint.h>
+#include<math.h>
 
 #if defined(__APPLE__) || defined(MACOSX)
     #include<GLUT/glut.h>
@@ -32,10 +34,26 @@
 #define FATAL_ERROR(msg)    _error_check(__FILE__, __LINE__, msg, 1);
 #define WARN_ERROR(msg)     _error_check(__FILE__, __LINE__, msg, 0);
 
+#define _RNG_HI_MASK 0x3ff0000000000000L
+#define _RNG_LO_MASK    0xfffffffffffffL
+
+union _u_rng {
+    int64_t int_val;
+    double dbl_val;
+};
+
 void _do_gl_error_check(char *filename, int line, int fail);
 
 void _error_check(char *filename, int line, char *msg, int fail);
 
 void write_string_wi(char *str, int x, int y, void *font);
+
+double randf(FILE *rng);
+
+void nrandf(double *results, FILE *rng, size_t n);
+
+void random_uvec(double *result, FILE *rng, size_t dim);
+
+void unitize(double *vec, size_t dim);
 
 #endif

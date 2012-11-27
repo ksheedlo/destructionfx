@@ -12,6 +12,8 @@
 #include<stdint.h>
 #include<string.h>
 
+#define GL_GLEXT_PROTOTYPES
+
 #if defined(__APPLE__) || defined(MACOSX)
     #include<GLUT/glut.h>
     #include<OpenGL/gl.h>

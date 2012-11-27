@@ -48,11 +48,9 @@ void _error_check(char *filename, int line, char *msg, int fail);
 
 void write_string_wi(char *str, int x, int y, void *font);
 
-double randf(FILE *rng);
+void nrandf(double *results, size_t n);
 
-void nrandf(double *results, FILE *rng, size_t n);
-
-void random_uvec(double *result, FILE *rng, size_t dim);
+void random_uvec(double *result, size_t dim);
 
 void unitize(double *vec, size_t dim);
 

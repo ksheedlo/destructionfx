@@ -14,6 +14,7 @@
 #include<stdlib.h>
 #include<math.h>
 #include<float.h>
+#include<time.h>
 
 #if defined(__APPLE__) || defined(MACOSX)
     #include<GLUT/glut.h>
@@ -49,7 +50,6 @@ static km_camera camera;
 static double aspect_ratio;
 static int window_width, window_height;
 static double t0 = -1.0;
-static FILE *rng;
 
 static int ambient = 30;
 static int diffuse = 100;
@@ -79,10 +79,10 @@ void make_frags(point3d *point) {
         GLdouble vec[3];
         dfx_fragment_init(&frag);
         dfx_fragment_set_pos(&frag, position);
-        random_uvec(vec, rng, 3);
+        random_uvec(vec, 3);
         scale_vector(vec, FRAGMENT_SPEED, 3);
         dfx_fragment_set_vel(&frag, vec);
-        random_uvec(vec, rng, 3);
+        random_uvec(vec, 3);
         dfx_fragment_set_rotv(&frag, vec);
         gdsl_list_insert_tail(fragment_list, &frag);
     }
@@ -413,7 +413,6 @@ void idle(void) {
 }
 
 void cleanup() {
-    fclose(rng);
     octree_destroy(&tree, OCTREE_FREE_DATA);
     gdsl_list_free(fragment_list);
 }
@@ -476,10 +475,7 @@ void init(void) {
                             dfx_fragment_copy_free
                         );
 
-    rng = fopen("/dev/urandom", "r");
-    if (rng == NULL) {
-        FATAL_ERROR("fopen rng");
-    }
+    srand48(time(NULL));
     atexit(cleanup);
 }
 

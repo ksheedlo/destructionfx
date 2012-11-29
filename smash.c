@@ -41,6 +41,9 @@
 #define STEP_SIZE 0.17321
 #define GRAVITY 3.215
 
+#define MAX_FOG_DENSITY     0.40f
+#define FOG_DENSITY_STEP    0.002f
+
 /* Number of fragments ejected from a brick smash */
 #define FRAGMENT_COUNT  4
 
@@ -54,6 +57,7 @@ static double t0 = -1.0;
 static int ambient = 30;
 static int diffuse = 100;
 static int specular = 0;
+static GLfloat fog_density;
 
 static int dfx_count;
 
@@ -61,6 +65,13 @@ static unsigned int texture[4];
 
 static octree_n tree;
 static gdsl_list_t fragment_list;
+
+const GLfloat FOG_COLOR[4] = {
+    0.8f,
+    0.8f,
+    0.8f,
+    1.0f
+};
 
 void draw_voxel_elt(const octree_vol *volume) {
     dfx_cube *cube = (dfx_cube *)(volume->data);
@@ -107,9 +118,17 @@ void display(void) {
     dfx_cube_init_octree_vol(&vol, &test_cube);
     int collision = octree_collide(&tree, &vol);
 
+    glFogi(GL_FOG_MODE, GL_EXP2);
+    glFogfv(GL_FOG_COLOR, FOG_COLOR);
+    glFogf(GL_FOG_DENSITY, fog_density);
+    glHint(GL_FOG_HINT, GL_NICEST);
+    glFogf(GL_FOG_START, 1.001f);
+    glFogf(GL_FOG_END, 16.001f);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
+    glEnable(GL_FOG);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glMatrixMode(GL_PROJECTION);
@@ -342,6 +361,9 @@ void keyboard(unsigned char k, int x, int y) {
                 if (test) {
                     free(elt.data);
                     make_frags(&point);
+                    if (fog_density < MAX_FOG_DENSITY) {
+                        fog_density += FOG_DENSITY_STEP;
+                    }
                 }
             }
             gdsl_list_cursor_free(list_cursor);
@@ -467,7 +489,9 @@ void init(void) {
         }
     }
 
-    glClearColor(0.239, 0.776, 0.890, 1.0);
+    //glClearColor(0.239, 0.776, 0.890, 1.0);
+    glClearColor(FOG_COLOR[0], FOG_COLOR[1], FOG_COLOR[2], FOG_COLOR[3]);
+    fog_density = 0.0f;
 
     fragment_list = gdsl_list_alloc(
                             "global:fragment", 

@@ -13,6 +13,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<math.h>
 
 #include<gdsl_list.h>
 
@@ -150,6 +151,12 @@ int bounds_contain_point(const bounding_box *box, const point3d *point);
  */
 int bounds_intersect_line(double *results, const bounding_box *box, const ray3d *ray);
 
+int bounds_intersect_sphere(
+                    const bounding_box *box, 
+                    const point3d *center, 
+                    const double radius
+                );
+
 /* Queries the octree for results intersecting the given volume.
  *
  * Parameters:
@@ -167,9 +174,23 @@ int octree_query_range(gdsl_list_t results,
 
 int octree_query_line(gdsl_list_t results, const octree_n *tree, const ray3d *ray);
 
+int octree_query_sphere(
+                    gdsl_list_t results, 
+                    const octree_n *tree, 
+                    const point3d *center, 
+                    const double radius
+                );
+
 void _get_octree_volume_bounds(bounding_box *box, const octree_vol *volume);
 
 void _get_octree_bounds(bounding_box *box, const octree_n *tree);
+
+double _point3d_d3_dist(
+                    const point3d *point, 
+                    const double x, 
+                    const double y, 
+                    const double z
+                );
 
 void write_octree_vol(const gdsl_element_t elt, FILE *output, gdsl_location_t loc, void *data);
 

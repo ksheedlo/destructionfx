@@ -508,3 +508,82 @@ void write_octree_vol(const gdsl_element_t elt, FILE *output, gdsl_location_t lo
             loc == GDSL_LOCATION_TAIL ? "]" : ", "
             );
 }
+
+int bounds_intersect_sphere(
+                    const bounding_box *box, 
+                    const point3d *center,
+                    const double radius
+                ) {
+    /* This algorithm is cheating a bit. There are cases where the center of the
+     * sphere could be outside the box and every vertex could be outside the
+     * box, but the box still intersects. The plane intersection algorithm is
+     * much more complicated, so we settle for this approximation.
+     */
+    if (bounds_contain_point(box, center)) {
+        return TRUE;
+    }
+    return (
+        _point3d_d3_dist(center, box->min_x, box->min_y, box->min_z) < radius ||
+        _point3d_d3_dist(center, box->max_x, box->min_y, box->min_z) < radius ||
+        _point3d_d3_dist(center, box->min_x, box->max_y, box->min_z) < radius ||
+        _point3d_d3_dist(center, box->max_x, box->max_y, box->min_z) < radius ||
+        _point3d_d3_dist(center, box->min_x, box->min_y, box->max_z) < radius ||
+        _point3d_d3_dist(center, box->max_x, box->min_y, box->max_z) < radius ||
+        _point3d_d3_dist(center, box->min_x, box->max_y, box->max_z) < radius ||
+        _point3d_d3_dist(center, box->max_x, box->max_y, box->max_z) < radius
+    );
+}
+
+double _point3d_d3_dist(
+                        const point3d *point,
+                        const double x,
+                        const double y,
+                        const double z
+                    ) {
+    double dx = point->x - x;
+    double dy = point->y - y;
+    double dz = point->z - z;
+    return sqrt(dx*dx + dy*dy + dz*dz);
+}
+
+int octree_query_sphere(
+                    gdsl_list_t results,
+                    const octree_n *tree,
+                    const point3d *center,
+                    const double radius
+                ) {
+    bounding_box bounds;
+    gdsl_list_t volumes = tree->volumes;
+    size_t volumes_len;
+    int32_t count = 0;
+    _get_octree_bounds(&bounds, tree);
+    if (!bounds_intersect_sphere(&bounds, center, radius)) {
+        return 0;
+    }
+    volumes_len = gdsl_list_get_size(volumes);
+    gdsl_list_cursor_t cursor = gdsl_list_cursor_alloc(volumes);
+    gdsl_list_cursor_move_to_head(cursor);
+    for (uint32_t i = 0; i < volumes_len; i++) {
+        octree_vol *vol = (octree_vol *)gdsl_list_cursor_get_content(cursor);
+        _get_octree_volume_bounds(&bounds, vol);
+        if (bounds_intersect_sphere(&bounds, center, radius)) {
+            if(gdsl_list_insert_tail(results, vol) == NULL) {
+                return ERROR;
+            }
+            count++;
+        }
+        gdsl_list_cursor_step_forward(cursor);
+    }
+    gdsl_list_cursor_free(cursor);
+    for (int i = 0; i < 8; i++) {
+        if (tree->child[i] != NULL) {
+            int result = octree_query_sphere(results, tree->child[i], center, radius);
+            if (result == ERROR) {
+                return ERROR;
+            } else {
+                count += result;
+            }
+        }
+    }
+    return count;
+}

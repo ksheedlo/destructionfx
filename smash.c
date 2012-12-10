@@ -41,8 +41,12 @@
 #define STEP_SIZE 0.17321
 #define GRAVITY 3.215
 
+#define W_RPG       0
+#define W_PELLETGUN 1
+#define N_WPN_TYPES 2
+
 #define MAX_FOG_DENSITY     0.40f
-#define FOG_DENSITY_STEP    0.002f
+#define FOG_DENSITY_STEP    0.0002f
 
 /* Number of fragments ejected from a brick smash */
 #define FRAGMENT_COUNT  4
@@ -65,6 +69,7 @@ static unsigned int texture[4];
 
 static octree_n tree;
 static gdsl_list_t fragment_list;
+static int weapon = W_RPG;
 
 const GLfloat FOG_COLOR[4] = {
     0.8f,
@@ -77,6 +82,16 @@ void draw_voxel_elt(const octree_vol *volume) {
     dfx_cube *cube = (dfx_cube *)(volume->data);
 
     dfx_cube_draw(cube);
+}
+
+char *weapon_name(int weapon) {
+    switch(weapon) {
+        case W_RPG:
+            return "RPG";
+        case W_PELLETGUN:
+            return "Pellet Gun";
+    }
+    return "Unknown";
 }
 
 void make_frags(point3d *point) {
@@ -116,7 +131,6 @@ void display(void) {
     dfx_cube_init(&test_cube, EPSILON);
     dfx_cube_set_pos(&test_cube, cursor);
     dfx_cube_init_octree_vol(&vol, &test_cube);
-    int collision = octree_collide(&tree, &vol);
 
     glFogi(GL_FOG_MODE, GL_EXP2);
     glFogfv(GL_FOG_COLOR, FOG_COLOR);
@@ -220,20 +234,8 @@ void display(void) {
         octree_traverse(&tree, draw_voxel_elt);
         glDisable(GL_LIGHTING);
 
-        /* Draw the camera's line of sight */
-#if 0
-        glColor3f(0.0, 0.0, 0.0);
-        glBegin(GL_LINES);
-            GLdouble dx, dy, dz;
-            dx = camera.center[0] - camera.position[0];
-            dy = camera.center[1] - camera.position[1];
-            dz = camera.center[2] - camera.position[2];
-            glVertex3f(cursor[0], cursor[1], cursor[2]);
-            glVertex3f(cursor[0] + 10*dx + 1.0, cursor[1] + 10*dy + 1.0, cursor[2] + 10*dz);
-        glEnd();
-#endif
         glColor3f(1.0, 1.0, 1.0);
-        snprintf(infobuf, INFOBUF_SIZE, "collision%s detected", collision ? "" : " not");
+        snprintf(infobuf, INFOBUF_SIZE, "Current weapon: %s", weapon_name(weapon));
         write_string_wi(infobuf, 10, 10, GLUT_BITMAP_HELVETICA_12);
     glPopMatrix();  /* MODELVIEW */
 
@@ -280,9 +282,9 @@ void keyboard(unsigned char k, int x, int y) {
     bounding_box bounds;
     double results[2];
     int test;
-    gdsl_list_t list;
-    gdsl_list_cursor_t list_cursor;
-    size_t len;
+    gdsl_list_t list, sphere_query;
+    gdsl_list_cursor_t list_cursor, sphere_query_cursor;
+    size_t len, sphere_query_len;
 
     switch (k) {
         case 'W':
@@ -313,16 +315,6 @@ void keyboard(unsigned char k, int x, int y) {
             exit(0);
             break;
         case ' ':
-#if 0
-            kmcam_getpos_offset(cursor, &camera, offset);
-            point.x = cursor[0];
-            point.y = cursor[1];
-            point.z = cursor[2];
-            int result = octree_delete(&vol, &tree, &point);
-            if (result) {
-                free(vol.data);
-            }
-#endif
             kmcam_getpos_offset(cursor, &camera, offset);
             ray.dx = camera.center[0] - camera.position[0];
             ray.dy = camera.center[1] - camera.position[1];
@@ -357,17 +349,46 @@ void keyboard(unsigned char k, int x, int y) {
                 point.x = (bounds.min_x + bounds.max_x) / 2.0;
                 point.y = (bounds.min_y + bounds.max_y) / 2.0;
                 point.z = (bounds.min_z + bounds.max_z) / 2.0;
-                test = octree_delete(&elt, &tree, &point);
-                if (test) {
-                    free(elt.data);
-                    make_frags(&point);
-                    if (fog_density < MAX_FOG_DENSITY) {
-                        fog_density += FOG_DENSITY_STEP;
+                if (weapon == W_RPG) {
+                    sphere_query = gdsl_list_alloc("tmp:keyboard:sphere", NULL, NULL);
+                    sphere_query_len = octree_query_sphere(sphere_query, &tree, &point, 0.8);
+                    sphere_query_cursor = gdsl_list_cursor_alloc(sphere_query);
+                    gdsl_list_cursor_move_to_head(sphere_query_cursor);
+                    for (uint32_t i = 0; i < sphere_query_len; i++) {
+                        vol = (octree_vol *)gdsl_list_cursor_get_content(sphere_query_cursor);
+                        _get_octree_volume_bounds(&bounds, vol);
+                        point.x = (bounds.min_x + bounds.max_x) / 2.0;
+                        point.y = (bounds.min_y + bounds.max_y) / 2.0;
+                        point.z = (bounds.min_z + bounds.max_z) / 2.0;
+                        test = octree_delete(&elt, &tree, &point);
+                        if (test) {
+                            free(elt.data);
+                            make_frags(&point);
+                            if (fog_density < MAX_FOG_DENSITY) {
+                                fog_density += FOG_DENSITY_STEP;
+                            }
+                        }
+                        gdsl_list_cursor_step_forward(sphere_query_cursor);
+                    }
+                    gdsl_list_cursor_free(sphere_query_cursor);
+                    gdsl_list_free(sphere_query);
+                } else if (weapon == W_PELLETGUN) {
+                    test = octree_delete(&elt, &tree, &point);
+                    if (test) {
+                        free(elt.data);
+                        make_frags(&point);
+                        if (fog_density < MAX_FOG_DENSITY) {
+                            fog_density += FOG_DENSITY_STEP;
+                        }
                     }
                 }
             }
             gdsl_list_cursor_free(list_cursor);
             gdsl_list_free(list);
+            break;
+        case 'f':
+        case 'F':
+            weapon = (weapon+1) % N_WPN_TYPES;
             break;
         default:
             return;

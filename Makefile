@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Wno-unused-parameter -std=gnu99 -g
+CFLAGS=-Wall -Wextra -Wno-unused-parameter -std=gnu99 -O3
 LIBS=-lm
 GLLIBS=
 
@@ -55,7 +55,7 @@ CSCIx229.a:fatal.o loadtexbmp.o print.o project.o errcheck.o object.o
 
 .PHONY: archive
 archive:
-	tar cjvf review.tar.bz2 *.[hc] Makefile README.md smash runtests setup.sh bitmaps
+	tar cjvf final.tar.bz2 *.[hc] Makefile README.md smash runtests setup.sh bitmaps
 
 .PHONY: clean
 clean:

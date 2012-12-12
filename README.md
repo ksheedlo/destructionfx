@@ -25,29 +25,37 @@ From there, you should be able to build and run the code.
 ## Controls
 
 WASD - Move  
-Space - Shoot invisible ray  
+F - Switch weapons
+1 - Jump
+Space - Shoot simulated gun
 Arrow keys - Rotate and tilt the camera  
 
-## Review Update
+## Final Submission Update
 
-### Project Metrics
+### Project Retrospective
 
-- 25 commits
-- 2,475 lines of code
-- 30+ hours of work
-- Github: [destructionfx](https://github.com/ksheedlo/destructionfx)
+I created a collision detection engine using octrees and a cool visualizer for
+it. It uses lighting, textures, particle effects and fog. It features
+first-person navigation for a more immersive experience. I've made the particle
+effects more dramatic than they were in the review update. You can now use a
+bigger simulated gun to put a huge crater in the brick wall and send particles 
+flying everywhere. I'm proud of the attention to detail that this project 
+allowed me to make. Each tiny particle is lit correctly on each of its faces.
+The fog increases gradually as you smash more and more blocks. The large gun
+features a spherical collision detection query that I wrote on the octree
+engine.
 
 ### Notes for Best Usage
 
-The line intersection test isn't perfect. It's best if you line up facing one of
-the sides of the box and shoot directly at the brick wall. The particle effects
-are best seen when shooting the corners of the structure.
+I still haven't perfected the line intersection query. This means that it's
+still best to shoot directly at the sides of a box. Collision detection
+sometimes fails to trigger when shooting at the boxes at oblique angles. The
+particle effects are most obvious with the RPG, which is now the default gun.
 
-### Stuff I'd Like to Do
+### Project Metrics
 
-There are a lot of ways I could go with this. I could play with fog, or shaders,
-or expand on the particle effects I've already got. I'm probably going to try
-and get the octree to detect spherical intersections to simulate area weapons.
-Then I might try building the entire scene out of DFX cubes and having an entire
-destructible environment.
+- 33 commits
+- 2,702 lines of code
+- 40+ hours of work
+- Github: [destructionfx](https://github.com/ksheedlo/destructionfx)
 

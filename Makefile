@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Wno-unused-parameter -std=gnu99 -g
+LIBS=-lm
 GLLIBS=
 
 SYSNAME=$(shell uname -s)
@@ -35,10 +36,10 @@ dfxfragment.o: dfxfragment.c dfxfragment.h
 	$(CC) $(CFLAGS) $(GDSLFLAGS) -c $^
 
 smash_raw: smash.c octree.o kmcam.o util.o dfxcube.o dfxfragment.o CSCIx229.a
-	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS)
+	$(CC) $(CFLAGS) $(GDSLFLAGS) -o $@ $^ $(GLLIBS) $(GDSLLIBS) $(LIBS)
 
 test: test.c test.h octree.o
-	$(CC) $(CFLAGS) $(CUNITFLAGS) $(GDSLFLAGS) -o $@ $^ $(GDSLLIBS) $(CUNITLIBS)
+	$(CC) $(CFLAGS) $(CUNITFLAGS) $(GDSLFLAGS) -o $@ $^ $(GDSLLIBS) $(CUNITLIBS) $(LIBS)
 
 #  Generic compile rules
 .c.o:

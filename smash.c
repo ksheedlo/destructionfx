@@ -40,6 +40,7 @@
 #define INFOBUF_SIZE 64
 #define STEP_SIZE 0.17321
 #define GRAVITY 3.215
+#define CAMERA_HEIGHT 1.11
 
 #define W_RPG       0
 #define W_PELLETGUN 1
@@ -54,7 +55,7 @@
 #define FRAGMENT_SPEED  2.0
 
 static km_camera camera;
-static double aspect_ratio;
+static double aspect_ratio, y_vel;
 static int window_width, window_height;
 static double t0 = -1.0;
 
@@ -390,6 +391,10 @@ void keyboard(unsigned char k, int x, int y) {
         case 'F':
             weapon = (weapon+1) % N_WPN_TYPES;
             break;
+        case '1':
+            y_vel = 5.0;
+            t0 = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+            break;
         default:
             return;
     }
@@ -433,6 +438,24 @@ void idle(void) {
     dt = t - t0;
     t0 = t;
 
+    /* Apply gravity to the viewer */
+    GLdouble transform[3];
+    transform[0] = 0.0;
+    transform[1] = y_vel * dt;
+    transform[2] = 0.0;
+
+    kmcam_translate_world(&camera, transform);
+    kmcam_getpos_world(transform, &camera);
+    if (transform[1] < CAMERA_HEIGHT) {
+        transform[0] = 0.0;
+        transform[1] = CAMERA_HEIGHT - transform[1];
+        transform[2] = 0.0;
+        kmcam_translate_world(&camera, transform);
+        y_vel = 0.0;
+    } else {
+        y_vel -= GRAVITY * dt;
+    }
+
     size_t fragment_ct = gdsl_list_get_size(fragment_list);
     if (fragment_ct > 0) {
         gdsl_list_cursor_t cursor = gdsl_list_cursor_alloc(fragment_list);
@@ -467,7 +490,7 @@ void init(void) {
     window_height = glutGet(GLUT_WINDOW_HEIGHT);
     GLdouble camera_pos[3] = {
         0.1,
-        1.11,
+        CAMERA_HEIGHT,
         -6.1
     };
     kmcam_translate(&camera, camera_pos);

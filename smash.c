@@ -503,31 +503,39 @@ void init(void) {
         1.0, 
         1.0
     };
+    GLdouble start_point[4][3] = {
+        { 0.0, 0.0, 2.0 },
+        { 0.0, 0.0, -4.0 },
+        { 4.0, 0.0, 2.0 },
+        { 4.0, 0.0, -4.0 }
+    };
 
     /* Populate the tree with cubes */
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 16; j++) {
-            for (int k = 0; k < 16; k++) {
-                octree_vol vol;
-                dfx_cube *cube = malloc(sizeof(*cube));
-                if (cube == NULL) {
-                    FATAL_ERROR("malloc dfx cube");                   
-                }
-                dfx_cube_init(cube, 0.2);
-                GLdouble pos[3] = {
-                    i * 0.2,
-                    j * 0.2,
-                    k * 0.2
-                };
-                dfx_cube_set_pos(cube, pos);
-                dfx_cube_set_color3d(cube, color);
-                dfx_cube_set_texture(cube, texture[1]);
-                dfx_cube_init_octree_vol(&vol, cube);
-                int result = octree_insert(&tree, &vol, OCTREE_DEFAULTS);
-                if (result == FALSE) {
-                    WARN_ERROR("octree failed to insert");
-                } else if (result == ERROR) {
-                    FATAL_ERROR("octree");
+    for (int m = 0; m < 4; m++) {
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 12; j++) {
+                for (int k = 0; k < 12; k++) {
+                    octree_vol vol;
+                    dfx_cube *cube = malloc(sizeof(*cube));
+                    if (cube == NULL) {
+                        FATAL_ERROR("malloc dfx cube");                   
+                    }
+                    dfx_cube_init(cube, 0.2);
+                    GLdouble pos[3] = {
+                        i * 0.2 + start_point[m][0],
+                        j * 0.2 + start_point[m][1],
+                        k * 0.2 + start_point[m][2]
+                    };
+                    dfx_cube_set_pos(cube, pos);
+                    dfx_cube_set_color3d(cube, color);
+                    dfx_cube_set_texture(cube, texture[1]);
+                    dfx_cube_init_octree_vol(&vol, cube);
+                    int result = octree_insert(&tree, &vol, OCTREE_DEFAULTS);
+                    if (result == FALSE) {
+                        WARN_ERROR("octree failed to insert");
+                    } else if (result == ERROR) {
+                        FATAL_ERROR("octree");
+                    }
                 }
             }
         }
